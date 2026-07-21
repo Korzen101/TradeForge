@@ -75,7 +75,12 @@
     wirePush();
 
     TF.apiQuiet('app:version').then((v) => {
-      if (v) { TF.$('appVersion').textContent = 'v' + v; TF.$('aboutVersion').textContent = 'v' + v; }
+      if (v) {
+        // "1.2.0" displays as "v1.2"; a patch release like "1.2.1" shows fully.
+        const disp = 'v' + v.replace(/\.0$/, '');
+        TF.$('appVersion').textContent = disp;
+        TF.$('aboutVersion').textContent = disp;
+      }
     });
 
     await TF.strategies.init();

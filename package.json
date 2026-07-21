@@ -1,7 +1,7 @@
 {
   "name": "tradeforge",
   "productName": "TradeForge",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "Automated stock trading desktop app with paper and live modes (Alpaca)",
   "main": "main.js",
   "author": "Chris Korzen",
@@ -11,7 +11,7 @@
     "smoke": "electron . --smoke",
     "test": "node --test tests/indicators.test.js tests/strategies.test.js",
     "dist": "electron-builder --win && node build/post-dist.js",
-    "release": "electron-builder --win --publish always && node build/post-dist.js"
+    "release": "node build/release.js"
   },
   "devDependencies": {
     "electron": "^35.0.0",
