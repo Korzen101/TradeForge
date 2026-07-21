@@ -105,7 +105,11 @@ function connectTrade() {
       }
     } else if (msg.stream === 'trade_updates' && msg.data) {
       const { event, order } = msg.data;
-      if ((event === 'fill' || event === 'partial_fill') && order) {
+      // Only the terminal 'fill' carries the complete filled_qty. processFill
+      // dedupes by order id, so forwarding an earlier 'partial_fill' would lock
+      // in an understated quantity. An order that only ever partially fills and
+      // is then cancelled is caught by the REST reconciler instead.
+      if (event === 'fill' && order) {
         handlers.fill(order);
       }
     }

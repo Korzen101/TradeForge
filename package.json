@@ -1,7 +1,7 @@
 {
   "name": "tradeforge",
   "productName": "TradeForge",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Automated stock trading desktop app with paper and live modes (Alpaca)",
   "main": "main.js",
   "author": "Chris Korzen",
