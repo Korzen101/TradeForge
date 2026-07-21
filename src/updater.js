@@ -19,11 +19,16 @@ function setState(s) {
   push(s);
 }
 
+// Default source is the GitHub repo baked into app-update.yml at build time
+// (from build.publish in package.json). A non-empty feedUrl is an optional
+// override for self-hosting on any static HTTPS folder.
 function configureFeed() {
   const url = (store.get().updates.feedUrl || '').trim();
-  if (!url) return false;
-  autoUpdater.setFeedURL({ provider: 'generic', url });
-  return true;
+  if (url) {
+    autoUpdater.setFeedURL({ provider: 'generic', url });
+    return 'generic';
+  }
+  return 'github';
 }
 
 function init(pushFn) {
@@ -61,7 +66,7 @@ function init(pushFn) {
 async function check() {
   if (!autoUpdater) throw new Error('Updater module not available');
   if (!app.isPackaged) throw new Error('Updates only work in the packaged app (not dev mode)');
-  if (!configureFeed()) throw new Error('No update feed URL configured in Settings → Updates');
+  configureFeed();
   setState({ state: 'checking' });
   await autoUpdater.checkForUpdates();
   return state;

@@ -10,7 +10,8 @@
     "start": "electron .",
     "smoke": "electron . --smoke",
     "test": "node --test tests/indicators.test.js tests/strategies.test.js",
-    "dist": "electron-builder --win && node build/post-dist.js"
+    "dist": "electron-builder --win && node build/post-dist.js",
+    "release": "electron-builder --win --publish always && node build/post-dist.js"
   },
   "devDependencies": {
     "electron": "^35.0.0",
@@ -44,6 +45,12 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Korzen101",
+      "repo": "TradeForge",
+      "releaseType": "release"
     }
   }
 }
