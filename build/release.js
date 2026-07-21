@@ -76,7 +76,8 @@ async function assetsComplete() {
     const built = build();
     if (await assetsComplete()) {
       console.log(`release: v${version} is complete on GitHub ✓`);
-      const post = spawnSync('node', [path.join(__dirname, 'post-dist.js')], { stdio: 'inherit', shell: true });
+      // No shell: array args survive spaces in the path (e.g. "Chris Korzen").
+      const post = spawnSync(process.execPath, [path.join(__dirname, 'post-dist.js')], { stdio: 'inherit' });
       process.exit(post.status || 0);
     }
     console.log(built
