@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline'; frame-src https://s.tradingview.com https://www.tradingview-widget.com https://tradingview-widget.com; img-src 'self' data: https:; script-src 'self'" />
+  <title>TradeForge</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="root">
+    <!-- ============ Sidebar ============ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="assets/icon.png" alt="TradeForge" /></div>
+        <div class="brand-name">TradeForge</div>
+      </div>
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard">
+          <span class="nav-ico">◧</span> Dashboard
+        </button>
+        <button class="nav-item" data-view="charts">
+          <span class="nav-ico">📈</span> Charts
+        </button>
+        <button class="nav-item" data-view="strategies">
+          <span class="nav-ico">🧠</span> Strategies
+        </button>
+        <button class="nav-item" data-view="backtest">
+          <span class="nav-ico">⏮</span> Backtest
+        </button>
+        <button class="nav-item" data-view="scanner">
+          <span class="nav-ico">📡</span> Scanner
+        </button>
+        <button class="nav-item" data-view="news">
+          <span class="nav-ico">📰</span> News
+        </button>
+        <button class="nav-item" data-view="stocks">
+          <span class="nav-ico">☰</span> Stocks
+        </button>
+        <button class="nav-item" data-view="history">
+          <span class="nav-ico">🕘</span> History
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-ico">⚙</span> Settings
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div id="modeBadge" class="mode-badge paper">PAPER</div>
+        <div class="version" id="appVersion"></div>
+      </div>
+    </aside>
+
+    <!-- ============ Main ============ -->
+    <main class="main">
+
+      <!-- ===== Dashboard ===== -->
+      <section class="view active" id="view-dashboard">
+        <header class="view-head">
+          <div>
+            <h1>Dashboard</h1>
+            <div class="subtitle" id="dashSubtitle">Connect your Alpaca keys in Settings to begin.</div>
+          </div>
+          <div class="head-actions">
+            <div class="status-pills">
+              <span class="pill" id="pillMarket">Market —</span>
+              <span class="pill" id="pillStrategy">—</span>
+            </div>
+            <button class="btn btn-start" id="btnEngine">▶ Start Engine</button>
+          </div>
+        </header>
+
+        <div id="haltBanner" class="banner danger hidden"></div>
+        <div id="authBanner" class="banner danger hidden">
+          🔑 <b>Alpaca is rejecting your API keys (unauthorized).</b> This usually means the keys were regenerated
+          on alpaca.markets — regenerating instantly kills the old pair. Paste the current keys in
+          <a href="#" id="linkAuthSettings">Settings</a> and the app will reconnect automatically.
+        </div>
+        <div id="setupBanner" class="banner info hidden">
+          No API keys configured. <a href="#" id="linkGoSettings">Open Settings</a> to connect your free
+          Alpaca paper-trading account.
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Equity</div><div class="stat-value" id="stEquity">—</div></div>
+          <div class="stat-card"><div class="stat-label">Day P/L</div><div class="stat-value" id="stDayPl">—</div></div>
+          <div class="stat-card"><div class="stat-label">Buying Power</div><div class="stat-value" id="stBp">—</div></div>
+          <div class="stat-card"><div class="stat-label">Cash</div><div class="stat-value" id="stCash">—</div></div>
+          <div class="stat-card"><div class="stat-label">Day Trades Used</div><div class="stat-value" id="stDayTrades">—</div></div>
+          <div class="stat-card"><div class="stat-label">Today: Trades / Win% / P/L</div><div class="stat-value" id="stToday">—</div></div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head">
+              <h2>Open Positions</h2>
+              <button class="btn btn-sm btn-danger-outline" id="btnCloseAll">Close All</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Symbol</th><th>Qty</th><th>Entry</th><th>Now</th><th>P/L</th><th></th></tr></thead>
+                <tbody id="positionsBody"><tr><td colspan="6" class="empty">No open positions</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Activity</h2><span class="dim" id="lastTickNote"></span></div>
+            <div class="log-feed" id="logFeed"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Strategy Signals</h2>
+            <span class="dim small">what the engine sees on each stock, every scan</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Symbol</th><th>Price</th><th>State</th><th>Detail</th></tr></thead>
+              <tbody id="signalsBody"><tr><td colspan="4" class="empty">Start the engine to see live signal states</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Markets</h2>
+            <span class="dim small">S&amp;P 500 (SPY) · Dow Jones (DIA) · Nasdaq-100 (QQQ) — updates during market hours</span>
+          </div>
+          <div class="mini-charts">
+            <iframe class="mini-chart" id="miniSpx" title="S&amp;P 500"></iframe>
+            <iframe class="mini-chart" id="miniDow" title="Dow Jones"></iframe>
+            <iframe class="mini-chart" id="miniNdq" title="Nasdaq 100"></iframe>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Charts ===== -->
+      <section class="view" id="view-charts">
+        <header class="view-head">
+          <div><h1>Charts</h1><div class="subtitle">Live TradingView charts for your watchlist</div></div>
+          <div class="head-actions">
+            <select id="chartInterval" class="select">
+              <option value="1">1 min</option>
+              <option value="5" selected>5 min</option>
+              <option value="15">15 min</option>
+              <option value="60">1 hour</option>
+              <option value="D">Daily</option>
+            </select>
+          </div>
+        </header>
+        <div class="chip-row" id="chartSymbols"></div>
+        <div class="chart-frame card">
+          <iframe id="tvFrame" title="TradingView chart" allowfullscreen></iframe>
+        </div>
+        <p class="dim small">Charts are provided by TradingView's free widget and require an internet connection.</p>
+      </section>
+
+      <!-- ===== Strategies ===== -->
+      <section class="view" id="view-strategies">
+        <header class="view-head">
+          <div><h1>Strategies</h1>
+            <div class="subtitle">Pick the strategy the engine runs. One strategy is active at a time.</div>
+          </div>
+        </header>
+        <div class="banner info">
+          These are well-studied, classic strategies — but <b>no strategy has a guaranteed success rate</b>.
+          Performance depends on market conditions, symbols, and your risk settings. Test on paper first.
+        </div>
+        <div class="strategy-grid" id="strategyGrid"></div>
+      </section>
+
+      <!-- ===== Backtest ===== -->
+      <section class="view" id="view-backtest">
+        <header class="view-head">
+          <div><h1>Backtest</h1>
+            <div class="subtitle">Replay history through the exact strategy code the live engine runs</div>
+          </div>
+        </header>
+        <div class="banner info">
+          Backtests flatter: perfect data, instant fills, no competition for shares. Use them to <b>compare</b>
+          strategies and parameters — not to predict profits. The simulation is portfolio-style: your
+          max-open-positions cap and daily loss limit apply across all symbols together, entries fill at the
+          next bar's open, stops win ties, strategy exits fill at the bar's close, and slippage is charged both ways.
+        </div>
+        <div class="card">
+          <div class="form-grid">
+            <label>Strategy
+              <select class="select" id="btStrategy"></select>
+            </label>
+            <label>Test mode
+              <select class="select" id="btMode">
+                <option value="standard">Standard</option>
+                <option value="consistency">Consistency — 3 separate periods</option>
+                <option value="optimize">Optimize parameters — 70/30 walk-forward</option>
+              </select>
+            </label>
+            <label>History
+              <select class="select" id="btDays">
+                <option value="30">30 days</option>
+                <option value="60" selected>60 days</option>
+                <option value="90">90 days</option>
+                <option value="180">180 days</option>
+              </select>
+            </label>
+            <label>Bar timeframe
+              <select class="select" id="btTimeframe">
+                <option value="1Min">1 minute</option>
+                <option value="5Min" selected>5 minutes</option>
+                <option value="15Min">15 minutes</option>
+              </select>
+            </label>
+            <label><span>Slippage % per side <span class="rec-chip">rec 0.02</span></span>
+              <input class="input" type="number" id="btSlippage" min="0" max="1" step="0.01" /></label>
+            <label><span>Starting equity $ <span class="rec-chip">rec 100,000</span></span>
+              <input class="input" type="number" id="btEquity" min="1000" step="1000" /></label>
+          </div>
+          <div class="row-inline">
+            <button class="btn btn-primary" id="btRun">Run backtest</button>
+            <button class="btn hidden" id="btCancel">Cancel</button>
+            <span class="dim small">Uses your enabled Stocks list and current risk settings (exits, sizing, limits).</span>
+          </div>
+          <div class="bt-progress hidden" id="btProgressWrap">
+            <div class="bt-bar"><div class="bt-fill" id="btFill"></div></div>
+            <span class="dim small" id="btNote"></span>
+          </div>
+        </div>
+        <div id="btResults"></div>
+      </section>
+
+      <!-- ===== Scanner ===== -->
+      <section class="view" id="view-scanner">
+        <header class="view-head">
+          <div><h1>Scanner</h1>
+            <div class="subtitle">Today's highest-volume and biggest-moving stocks — watchlist candidates</div>
+          </div>
+          <div class="head-actions">
+            <span class="dim small" id="scanStamp"></span>
+            <button class="btn" id="btnScanRefresh">↻ Refresh</button>
+          </div>
+        </header>
+        <div class="banner info">
+          Movers are moving for a reason — news, earnings, hype. Big volume and big % moves cut both ways,
+          and gaps can blow through stops. Add selectively, <b>backtest before trading them</b>, and remember the
+          earnings filter may rightly skip some of these tomorrow.
+        </div>
+        <div class="scan-grid">
+          <div class="card">
+            <div class="card-head"><h2>Most Active (Volume)</h2></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Symbol</th><th>Volume</th><th>Trades</th><th></th></tr></thead>
+                <tbody id="scanActives"><tr><td colspan="4" class="empty">Refresh to load</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Top Gainers</h2></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Symbol</th><th>Price</th><th>Change</th><th></th></tr></thead>
+                <tbody id="scanGainers"><tr><td colspan="4" class="empty">Refresh to load</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>Top Losers</h2></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Symbol</th><th>Price</th><th>Change</th><th></th></tr></thead>
+                <tbody id="scanLosers"><tr><td colspan="4" class="empty">Refresh to load</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== News ===== -->
+      <section class="view" id="view-news">
+        <header class="view-head">
+          <div><h1>News</h1>
+            <div class="subtitle">Top stories moving the market, or drill into a single ticker</div>
+          </div>
+          <div class="head-actions">
+            <span class="dim small" id="newsStamp"></span>
+            <input class="input input-sm" id="newsSymbol" placeholder="Ticker (e.g. AAPL)" maxlength="10" />
+            <button class="btn btn-primary" id="btnNewsSearch">Search</button>
+            <button class="btn" id="btnNewsMarket">Market news</button>
+          </div>
+        </header>
+        <div class="chip-row" id="newsChips"></div>
+        <div id="newsList">
+          <div class="card"><p class="dim" style="text-align:center;padding:20px 0;">Loading headlines…</p></div>
+        </div>
+      </section>
+
+      <!-- ===== Stocks ===== -->
+      <section class="view" id="view-stocks">
+        <header class="view-head">
+          <div><h1>Stocks</h1>
+            <div class="subtitle">The bot only trades symbols on this list that are toggled on.</div>
+          </div>
+        </header>
+        <div class="card">
+          <div class="add-row">
+            <input id="addSymbolInput" class="input" placeholder="Add symbol (e.g. NVDA)" maxlength="6" />
+            <button class="btn btn-primary" id="btnAddSymbol">Add</button>
+            <span class="dim small">Tip: stick to liquid, high-volume names — thin stocks fill badly.</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Symbol</th><th>Last</th><th>Day Δ</th><th>Bot Enabled</th><th></th></tr></thead>
+              <tbody id="watchlistBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== History ===== -->
+      <section class="view" id="view-history">
+        <header class="view-head">
+          <div><h1>Trade History</h1><div class="subtitle">Completed round trips with per-trade P/L</div></div>
+          <div class="head-actions">
+            <select id="histRange" class="select">
+              <option value="1">Today</option>
+              <option value="7">Last 7 days</option>
+              <option value="30" selected>Last 30 days</option>
+              <option value="0">All time</option>
+            </select>
+            <input id="histSymbol" class="input input-sm" placeholder="Symbol filter" />
+            <button class="btn" id="btnExportCsv">Export CSV</button>
+          </div>
+        </header>
+        <div class="card">
+          <div class="card-head"><h2>Daily P/L Calendar</h2>
+            <span class="dim small">account equity change per trading day — last 3 months</span></div>
+          <div class="cal-wrap" id="plCalendar"><p class="dim small">Connect your Alpaca keys to see account history.</p></div>
+        </div>
+
+        <div class="stat-grid five">
+          <div class="stat-card"><div class="stat-label">Net P/L</div><div class="stat-value" id="hsPl">—</div></div>
+          <div class="stat-card"><div class="stat-label">Trades</div><div class="stat-value" id="hsCount">—</div></div>
+          <div class="stat-card"><div class="stat-label">Win Rate</div><div class="stat-value" id="hsWin">—</div></div>
+          <div class="stat-card"><div class="stat-label">Avg Win / Loss</div><div class="stat-value" id="hsAvg">—</div></div>
+          <div class="stat-card"><div class="stat-label">Profit Factor</div><div class="stat-value" id="hsPf">—</div></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Equity Curve</h2><span class="dim small">cumulative realized P/L across the filtered trades</span></div>
+          <canvas id="histEquity" class="equity-canvas"></canvas>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-head"><h2>By Strategy</h2></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Strategy</th><th>Trades</th><th>Win %</th><th>P/L</th></tr></thead>
+                <tbody id="byStrategyBody"><tr><td colspan="4" class="empty">No trades yet</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><h2>By Symbol</h2></div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Symbol</th><th>Trades</th><th>Win %</th><th>P/L</th></tr></thead>
+                <tbody id="bySymbolBody"><tr><td colspan="4" class="empty">No trades yet</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>Closed</th><th>Symbol</th><th>Strategy</th><th>Qty</th>
+                <th>Buy</th><th>Sell</th><th>P/L $</th><th>P/L %</th><th>Exit Reason</th><th>Notes</th>
+              </tr></thead>
+              <tbody id="historyBody"><tr><td colspan="10" class="empty">No trades yet</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Settings ===== -->
+      <section class="view" id="view-settings">
+        <header class="view-head"><div><h1>Settings</h1></div></header>
+
+        <div class="card">
+          <div class="card-head"><h2>Trading Mode</h2></div>
+          <div class="setting-row">
+            <div class="segmented" id="modeSeg">
+              <button data-mode="paper" class="seg active">Paper (simulated)</button>
+              <button data-mode="live" class="seg seg-danger">Live (real money)</button>
+            </div>
+            <div class="dim small" id="modeNote">Paper mode uses Alpaca's simulator — real market data, fake money.</div>
+            <div class="dim small">Each mode keeps its own strategy, engine, risk, and stock settings. Switching modes stops the engine.</div>
+            <div class="row-inline"><button class="btn btn-sm" id="btnReadiness">Am I ready for live? 📋</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Alpaca API Keys</h2>
+            <span class="row-inline" style="margin:0">
+              <button class="btn btn-sm" id="btnRunWizard">Run setup wizard</button>
+              <a href="#" class="ext" data-ext="https://alpaca.markets">Get free keys at alpaca.markets ↗</a>
+            </span>
+          </div>
+          <div id="keysWarn" class="banner danger hidden"></div>
+          <div class="key-grid">
+            <div class="key-col">
+              <h3>Paper keys</h3>
+              <label>Key ID <input class="input" id="paperKey" placeholder="PK..." autocomplete="off" /></label>
+              <label>Secret <input class="input" id="paperSecret" type="password" placeholder="Secret" autocomplete="off" /></label>
+              <div class="row-inline">
+                <button class="btn btn-sm" id="btnSavePaperKeys">Save</button>
+                <button class="btn btn-sm" id="btnTestPaper">Test connection</button>
+                <span class="conn-status" id="paperConnStatus"></span>
+              </div>
+            </div>
+            <div class="key-col">
+              <h3>Live keys</h3>
+              <label>Key ID <input class="input" id="liveKey" placeholder="AK..." autocomplete="off" /></label>
+              <label>Secret <input class="input" id="liveSecret" type="password" placeholder="Secret" autocomplete="off" /></label>
+              <div class="row-inline">
+                <button class="btn btn-sm" id="btnSaveLiveKeys">Save</button>
+                <button class="btn btn-sm" id="btnTestLive">Test connection</button>
+                <span class="conn-status" id="liveConnStatus"></span>
+              </div>
+            </div>
+          </div>
+          <p class="dim small" id="keyStorageNote">Keys are stored on this computer only, encrypted with Windows account encryption (DPAPI).</p>
+        </div>
+
+        <div class="card has-info">
+          <div class="card-head"><h2>Engine</h2></div>
+          <div class="form-grid">
+            <label><span>Bar timeframe <span class="rec-chip">rec 5 min</span></span>
+              <select class="select" id="setTimeframe">
+                <option value="1Min">1 minute</option>
+                <option value="5Min">5 minutes (recommended)</option>
+                <option value="15Min">15 minutes</option>
+              </select>
+            </label>
+            <label><span>Scan every (seconds) <span class="rec-chip">rec 30</span></span>
+              <input class="input" type="number" id="setPollSec" min="10" max="300" /></label>
+            <label class="check-label"><input type="checkbox" id="setMarketHours" /> Trade market hours only <span class="rec-chip">rec on</span></label>
+            <label><span>Flatten positions before close (minutes, 0 = off) <span class="rec-chip">rec 10</span></span>
+              <input class="input" type="number" id="setFlattenMin" min="0" max="60" /></label>
+            <label class="check-label"><input type="checkbox" id="setSchedEnabled" /> Run engine on a daily schedule (ET)</label>
+            <label><span>Schedule start (ET) <span class="rec-chip">rec 09:30</span></span>
+              <input class="input" id="setSchedStart" placeholder="09:30" /></label>
+            <label><span>Schedule end (ET) <span class="rec-chip">rec 16:00</span></span>
+              <input class="input" id="setSchedEnd" placeholder="16:00" /></label>
+          </div>
+          <p class="dim small">The schedule auto-starts and auto-stops the engine each weekday (Eastern Time). The app
+            must be running — turn on <b>tray mode</b> under Application so it keeps trading with the window closed.
+            If you stop the engine manually mid-window, it stays stopped until the next day.</p>
+          <button class="info-btn" id="infoEngine" title="What do these settings do?">i</button>
+        </div>
+
+        <div class="card has-info">
+          <div class="card-head"><h2>Risk Controls</h2></div>
+          <div class="form-grid">
+            <label><span>Position sizing <span class="rec-chip">rec fixed $</span></span>
+              <select class="select" id="setSizingMode">
+                <option value="fixed">Fixed $ per trade (recommended)</option>
+                <option value="pctEquity">% of equity</option>
+                <option value="riskBased">Risk-based ($ risked per trade)</option>
+              </select>
+            </label>
+            <label><span>$ per trade <span class="rec-chip">rec 1,000</span></span>
+              <input class="input" type="number" id="setPositionValue" min="10" /></label>
+            <label><span>% of equity <span class="rec-chip">rec 5</span></span>
+              <input class="input" type="number" id="setPctEquity" min="0.5" max="100" step="0.5" /></label>
+            <label><span>Risk $ per trade <span class="rec-chip">rec 50</span></span>
+              <input class="input" type="number" id="setRiskPerTrade" min="5" /></label>
+            <label><span>Entry order type <span class="rec-chip">rec limit</span></span>
+              <select class="select" id="setEntryType">
+                <option value="limit">Marketable limit — caps slippage (recommended)</option>
+                <option value="market">Market — always fills, any price</option>
+              </select>
+            </label>
+            <label><span>Limit buffer % above ask <span class="rec-chip">rec 0.15</span></span>
+              <input class="input" type="number" id="setLimitBuffer" min="0.02" max="2" step="0.01" /></label>
+            <label><span>Max position vs avg daily volume % (0 = off) <span class="rec-chip">rec 0.5</span></span>
+              <input class="input" type="number" id="setMaxVolPct" min="0" max="10" step="0.1" /></label>
+            <label><span>Exit style <span class="rec-chip">rec fixed bracket</span></span>
+              <select class="select" id="setExitStyle">
+                <option value="fixed">Fixed bracket: stop-loss + take-profit (recommended)</option>
+                <option value="trailing">Trailing stop (lets winners run)</option>
+              </select>
+            </label>
+            <label><span>Trailing stop % <span class="rec-chip">rec 1.5</span></span>
+              <input class="input" type="number" id="setTrailPercent" min="0.2" max="10" step="0.1" /></label>
+            <label><span>Time exit after (min, 0 = off) <span class="rec-chip">rec 0</span></span>
+              <input class="input" type="number" id="setMaxHold" min="0" max="390" /></label>
+            <label class="check-label"><input type="checkbox" id="setAvoidEarnings" /> Skip stocks reporting earnings today <span class="rec-chip">rec on</span></label>
+            <label><span>Max open positions <span class="rec-chip">rec 3</span></span>
+              <input class="input" type="number" id="setMaxPos" min="1" max="20" /></label>
+            <label><span>Max trades per day <span class="rec-chip">rec 8</span></span>
+              <input class="input" type="number" id="setMaxTrades" min="1" max="100" /></label>
+            <label><span>Daily loss limit $ (0 = off) <span class="rec-chip">rec 300</span></span>
+              <input class="input" type="number" id="setDailyLoss" min="0" /></label>
+            <label><span>When loss limit hits <span class="rec-chip">rec sell &amp; halt</span></span>
+              <select class="select" id="setHaltAction">
+                <option value="flatten">Sell everything &amp; halt (recommended)</option>
+                <option value="holdOnly">Halt new buys, keep positions</option>
+              </select>
+            </label>
+            <label><span>Stop-loss % per trade <span class="rec-chip">rec 1.0</span></span>
+              <input class="input" type="number" id="setStopLoss" min="0.1" step="0.1" /></label>
+            <label><span>Take-profit % per trade <span class="rec-chip">rec 2.0</span></span>
+              <input class="input" type="number" id="setTakeProfit" min="0.1" step="0.1" /></label>
+            <label><span>Re-entry cooldown (min) <span class="rec-chip">rec 15</span></span>
+              <input class="input" type="number" id="setCooldown" min="0" /></label>
+            <label class="check-label"><input type="checkbox" id="setPdt" /> PDT protection (accounts under $25k) <span class="rec-chip">rec on</span></label>
+          </div>
+          <p class="dim small">Every buy is placed as a bracket order — its stop-loss and take-profit live at the broker,
+            so positions stay protected even if this app closes.</p>
+          <button class="info-btn" id="infoRisk" title="What do these settings do?">i</button>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Application</h2></div>
+          <div class="form-grid">
+            <label class="check-label"><input type="checkbox" id="setTrayMode" /> Keep running in system tray when window closes</label>
+            <label class="check-label"><input type="checkbox" id="setLaunchAtLogin" /> Start TradeForge when Windows starts</label>
+            <label class="check-label"><input type="checkbox" id="ntEnabled" /> Windows notifications <span class="rec-chip">rec on</span></label>
+            <label class="check-label"><input type="checkbox" id="ntTradeClosed" /> — when a trade closes (with P/L) <span class="rec-chip">rec on</span></label>
+            <label class="check-label"><input type="checkbox" id="ntTradeOpened" /> — when a position opens</label>
+            <label class="check-label"><input type="checkbox" id="ntHalt" /> — when trading halts (loss limit) <span class="rec-chip">rec on</span></label>
+            <label class="check-label"><input type="checkbox" id="ntError" /> — on engine errors</label>
+          </div>
+          <p class="dim small">With tray mode on, closing the window keeps the engine trading in the background —
+            reopen or quit from the tray icon next to your clock.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Updates</h2></div>
+          <div class="form-grid">
+            <label class="check-label"><input type="checkbox" id="upAuto" /> Check for updates automatically</label>
+            <label class="wide"><span>Update feed URL</span>
+              <input class="input" id="upFeedUrl" placeholder="https://example.com/tradeforge-releases/ (leave blank to disable)" /></label>
+          </div>
+          <div class="row-inline">
+            <button class="btn btn-sm" id="upSave">Save</button>
+            <button class="btn btn-sm" id="upCheck">Check for updates now</button>
+            <button class="btn btn-sm btn-primary hidden" id="upInstall">Restart &amp; install update</button>
+            <span class="dim small" id="upStatus"></span>
+          </div>
+          <p class="dim small">To enable: host the files from a build's <b>dist</b> folder (latest.yml + the Setup .exe)
+            on any static HTTPS site — free GitHub Releases works — and paste the folder URL here. Until then this stays idle.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Email Reports</h2></div>
+          <div class="form-grid">
+            <label class="check-label wide"><input type="checkbox" id="emEnabled" /> Enable email reports</label>
+            <label>SMTP host <input class="input" id="emHost" placeholder="smtp.gmail.com" /></label>
+            <label>Port <input class="input" type="number" id="emPort" placeholder="587" /></label>
+            <label class="check-label"><input type="checkbox" id="emSecure" /> Use TLS (port 465)</label>
+            <label>Username <input class="input" id="emUser" placeholder="you@gmail.com" /></label>
+            <label>Password / app password <input class="input" type="password" id="emPass" placeholder="••••••••" autocomplete="off" /></label>
+            <label>From (optional) <input class="input" id="emFrom" placeholder="defaults to username" /></label>
+            <label>Send reports to <input class="input" id="emTo" placeholder="you@example.com" /></label>
+            <label class="check-label"><input type="checkbox" id="emPerTrade" /> Email each closed trade (buy, sell, profit)</label>
+            <label class="check-label"><input type="checkbox" id="emDaily" /> Email daily summary</label>
+            <label>Daily summary time <input class="input" id="emTime" placeholder="16:15" /></label>
+          </div>
+          <div class="row-inline">
+            <button class="btn btn-sm" id="btnSaveEmail">Save email settings</button>
+            <button class="btn btn-sm" id="btnTestEmail">Send test email</button>
+            <button class="btn btn-sm" id="btnSummaryNow">Email today's summary now</button>
+          </div>
+          <p class="dim small">Gmail users: create an <b>app password</b> (Google Account → Security → 2-Step Verification → App passwords)
+            and use it here instead of your normal password.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>Data</h2></div>
+          <div class="row-inline">
+            <button class="btn btn-sm" id="btnOpenData">Open data folder</button>
+            <button class="btn btn-sm" id="btnOpenLogs">Open logs folder</button>
+            <button class="btn btn-sm" id="btnExportSettings">Export settings…</button>
+            <button class="btn btn-sm" id="btnImportSettings">Import settings…</button>
+            <button class="btn btn-sm" id="btnSupportBundle">Save support bundle…</button>
+            <button class="btn btn-sm" id="btnResetSettings">Reset settings to defaults</button>
+            <button class="btn btn-sm btn-danger-outline" id="btnClearTrades">Clear trade history</button>
+          </div>
+          <p class="dim small">Export/import moves your configuration between computers — API keys never travel and
+            imports always land in paper mode. The support bundle packages recent technical logs into one text file
+            for troubleshooting.</p>
+          <p class="dim small">Reset returns every setting to its recommended default. Your API keys and trade history are kept.
+            Technical logs cover engine activity, broker errors, and crashes for troubleshooting; they are deleted automatically after 7 days.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h2>About</h2></div>
+          <p class="dim">TradeForge <span id="aboutVersion"></span> — automated trading via your own Alpaca account.
+            Trading involves substantial risk of loss. This software is provided as-is, without warranty, and is not
+            financial advice. You are responsible for all trading activity in your account.</p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ Modals ============ -->
+  <div class="modal-backdrop hidden" id="disclaimerModal">
+    <div class="modal">
+      <h2>Before you begin</h2>
+      <p>TradeForge places <b>real orders automatically</b> when connected to a live account. Please acknowledge:</p>
+      <ul class="modal-list">
+        <li>Automated trading involves <b>substantial risk of loss</b>. Most short-term traders lose money.</li>
+        <li>This software is a tool, not advice. No strategy here has a guaranteed success rate.</li>
+        <li>Start in <b>paper mode</b> and run it for weeks before considering real funds.</li>
+        <li>You are solely responsible for activity in your brokerage account.</li>
+      </ul>
+      <label class="check-label"><input type="checkbox" id="ackCheck" /> I understand and accept the risks</label>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="ackBtn" disabled>Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="liveModal">
+    <div class="modal">
+      <h2>⚠️ Enable live trading?</h2>
+      <p>The engine will place orders with <b>real money</b> in your live Alpaca account, automatically,
+         while running. Losses are real. There is no undo.</p>
+      <p>Type <b>LIVE</b> to confirm:</p>
+      <input class="input" id="liveConfirmInput" placeholder="Type LIVE" autocomplete="off" />
+      <div class="modal-actions">
+        <button class="btn" id="liveCancelBtn">Cancel</button>
+        <button class="btn btn-danger" id="liveConfirmBtn" disabled>Enable live trading</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="confirmModal">
+    <div class="modal">
+      <h2 id="confirmTitle">Are you sure?</h2>
+      <p id="confirmBody"></p>
+      <div class="modal-actions">
+        <button class="btn" id="confirmCancel">Cancel</button>
+        <button class="btn btn-danger" id="confirmOk">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="wizardModal">
+    <div class="modal modal-wide">
+      <div class="wiz-steps" id="wizDots"></div>
+
+      <div class="wiz-step" data-step="0">
+        <h2>Welcome to TradeForge 🚀</h2>
+        <p>TradeForge trades stocks automatically through <b>your own Alpaca brokerage account</b> using
+          classic day-trading strategies with strict, broker-side risk protection.</p>
+        <ul class="modal-list">
+          <li>You'll start in <b>paper mode</b> — real market data, simulated money.</li>
+          <li>First step: a free Alpaca account (takes a few minutes).</li>
+          <li>Once it's created, generate <b>paper trading API keys</b> from the Alpaca dashboard.</li>
+        </ul>
+        <div class="row-inline">
+          <button class="btn" id="wizAlpacaLink">Open alpaca.markets ↗</button>
+        </div>
+      </div>
+
+      <div class="wiz-step hidden" data-step="1">
+        <h2>Connect your paper account</h2>
+        <p>Paste the paper-trading keys from your Alpaca dashboard. They're stored only on this computer,
+          encrypted with Windows account encryption.</p>
+        <label>Paper Key ID <input class="input" id="wizKey" placeholder="PK..." autocomplete="off" /></label>
+        <label style="margin-top:10px">Paper Secret <input class="input" id="wizSecret" type="password" placeholder="Secret" autocomplete="off" /></label>
+        <div class="row-inline">
+          <button class="btn btn-primary btn-sm" id="wizTestKeys">Save &amp; test connection</button>
+          <span class="conn-status" id="wizKeyStatus"></span>
+        </div>
+      </div>
+
+      <div class="wiz-step hidden" data-step="2">
+        <h2>Pick a starting strategy</h2>
+        <p>One strategy runs at a time. Each has an ⓘ explaining exactly how it trades — and you can
+          compare all ten on historical data in the Backtest tab before committing.</p>
+        <label>Strategy <select class="select" id="wizStrategy"></select></label>
+        <p class="dim small" id="wizStratBlurb" style="margin-top:10px"></p>
+      </div>
+
+      <div class="wiz-step hidden" data-step="3">
+        <h2>You're set — the honest checklist</h2>
+        <ul class="modal-list">
+          <li><b>Backtest first.</b> Run "Compare all 10 strategies" and let data pick your starting point.</li>
+          <li><b>Paper trade for weeks.</b> The "Am I ready for live?" report in Settings scores you honestly.</li>
+          <li><b>The daily loss limit is your friend.</b> It's pre-set to $300 — keep it tight.</li>
+          <li><b>Press ▶ Start Engine</b> on the Dashboard during market hours to begin.</li>
+        </ul>
+        <p class="dim small">Automated trading involves substantial risk of loss. Most short-term traders lose money.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn" id="wizSkip">Skip for now</button>
+        <button class="btn hidden" id="wizBack">Back</button>
+        <button class="btn btn-primary" id="wizNext">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop hidden" id="infoModal">
+    <div class="modal modal-wide">
+      <h2 id="infoTitle"></h2>
+      <div class="info-content" id="infoContent"></div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="infoClose">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="js/util.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/strategies.js"></script>
+  <script src="js/backtest.js"></script>
+  <script src="js/scanner.js"></script>
+  <script src="js/news.js"></script>
+  <script src="js/stocks.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/wizard.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
