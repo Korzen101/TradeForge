@@ -1,31 +1,39 @@
-// Runs after `npm run dist`: copies the freshly built installer for the
-// CURRENT version to the Desktop and removes stale older-version copies,
-// so the shareable installer there is always the latest.
+// Runs after a build/release: copies the freshly built installer to the Desktop
+// under a FIXED, version-free name so there is always exactly one installer
+// there, always current, and always the same clean filename to hand to someone.
+// Any older version-stamped copies left on the Desktop are removed.
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
 const version = require('../package.json').version;
 const dist = path.join(__dirname, '..', 'dist');
-const name = `TradeForge Setup ${version}.exe`;
-const src = path.join(dist, name);
+const builtName = `TradeForge Setup ${version}.exe`;
+const src = path.join(dist, builtName);
+
+// The single, stable name the Desktop copy always uses.
+const DESKTOP_NAME = 'TradeForge Setup.exe';
+
 if (!fs.existsSync(src)) {
-  console.log(`post-dist: ${name} not found in dist/`);
+  console.log(`post-dist: ${builtName} not found in dist/`);
   process.exit(0);
 }
+
 const desktop = path.join(os.homedir(), 'Desktop');
 try {
-  // Remove outdated installer copies from the Desktop first.
+  fs.copyFileSync(src, path.join(desktop, DESKTOP_NAME));
+  console.log(`post-dist: installer (v${version}) copied to ${path.join(desktop, DESKTOP_NAME)}`);
+
+  // Sweep up any version-stamped copies from older releases. The trailing
+  // space in the pattern means the fixed-name copy above is never matched.
   for (const f of fs.readdirSync(desktop)) {
-    if (/^TradeForge Setup .*\.exe$/.test(f) && f !== name) {
+    if (/^TradeForge Setup .+\.exe$/.test(f)) {
       try {
         fs.rmSync(path.join(desktop, f));
-        console.log('post-dist: removed stale ' + f);
-      } catch (_) {}
+        console.log('post-dist: removed old ' + f);
+      } catch (_) { /* in use; harmless to leave */ }
     }
   }
-  fs.copyFileSync(src, path.join(desktop, name));
-  console.log('post-dist: installer copied to ' + path.join(desktop, name));
 } catch (e) {
   console.log('post-dist: copy failed — ' + e.message);
 }
